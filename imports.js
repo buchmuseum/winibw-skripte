@@ -17,6 +17,7 @@ function Datenimport() {
 		return;
 	}
 	var record;
+var recordcount = 0;
 
 	while ((record = _readRecord(input)) != null) {
 		application.activeWindow.command("\\inv 1"); //neues eingabefenster titeldaten
@@ -25,13 +26,13 @@ function Datenimport() {
 		application.activeWindow.title.insertText(record);
 		//application.messageBox("", "", "");
 		application.activeWindow.simulateIBWKey("FR"); // Enter
+		recordcount++;
 		idn = application.activeWindow.variable("P3GPP");
         status = application.activeWindow.status;
         if (status != "OK") {
 
-            log.write("ERROR, \x22");
-            log.write(record);
-            log.write("\x22");
+            log.write("ERROR, ");
+            log.write(recordcount);
 			application.activeWindow.simulateIBWKey("FE"); // Escape
 
         } else {
@@ -152,17 +153,20 @@ function _readRecord(input) {
 	// Leerzeilen überlesen:
 
 	var line;
-	while ((line = input.readLine()) == "") {
+	while ((line = input.readLine()) == "\t") {
 		if (input.isEOF())
 			break;
 	}
 	
-            if (input.isEOF())
+    if (input.isEOF())
 		return null;
 
 	var record = "";
-	while (line != "" && !input.isEOF()) {
-                           record += "\n" + line;
+	while (line != "\t" && !input.isEOF()) {
+		if (record.length > 1)
+			record += "\n";
+
+        record += line;
 		line = input.readLine();
 }
 
