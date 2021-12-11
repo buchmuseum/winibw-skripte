@@ -1,6 +1,4 @@
-// ja
 function Datenimport() {
-
 	var input = utility.newFileInput();
 	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
 
@@ -13,41 +11,33 @@ function Datenimport() {
 	opened = log.create("D:\\za-batch.log");
 
 	if (!opened) {
-		application.messageBox("Fehler", "Kann Input nicht lesen", "error-icon");
+		application.messageBox("Fehler", "Kann Logdatei nicht anlegen", "error-icon");
 		log.close();
 		return;
 	}
 	var record;
-var recordcount = 0;
+	var recordcount = 0;
 
 	while ((record = _readRecord(input)) != null) {
-		application.activeWindow.command("\\inv 1"); //neues eingabefenster titeldaten
-                        //application.activeWindow.command("\\inv 2"); //neues eingabefenster normdaten
-
-		application.activeWindow.title.insertText(record);
-		//application.messageBox("", "", "");
-		application.activeWindow.simulateIBWKey("FR"); // Enter
 		recordcount++;
-        if (application.activeWindow.status != "OK") {
-
-            log.write("ERROR, ");
-            log.write(recordcount);
-			application.activeWindow.simulateIBWKey("FE"); // Escape
-
-        } else {
-            log.write(application.activeWindow.variable("P3GPP")); //idn
-        }
-
-        if (application.activeWindow.messages.count > 0) {
-			for (i = 0; i < application.activeWindow.messages.count; i++) {
-				log.write(",\x22");
-				log.write(application.activeWindow.messages.item(i).text);
-				log.write("\x22");
-
-        }
-	}
-
-        log.write("\n");
+		application.activeWindow.command("\\inv 1"); //neues eingabefenster titeldaten
+                //application.activeWindow.command("\\inv 2"); //neues eingabefenster normdaten
+		application.activeWindow.title.insertText(record);
+		application.activeWindow.simulateIBWKey("FR"); // Enter
+		
+        	if (application.activeWindow.status != "OK") {
+		    log.write("ERROR, ");
+		    log.write(recordcount);
+		    for (var i = 0; i < application.activeWindow.messages.count; i++) {
+			    log.write(",\x22");
+			    log.write(application.activeWindow.messages.item(i).text);
+			    log.write("\x22");
+		    }
+            	application.activeWindow.simulateIBWKey("FE"); // Escape
+        	} else {
+			log.write(application.activeWindow.variable("P3GPP")); //idn
+		}
+		log.write("\n");
 	}
 
 	input.close();
