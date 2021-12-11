@@ -6,6 +6,7 @@ function Datenimport() {
 
 	if (!opened) {
 		application.messageBox("Fehler", "Kann Input nicht lesen", "error-icon");
+		input.close();
 		return;
 	}
 	var log = utility.newFileOutput();
@@ -13,7 +14,7 @@ function Datenimport() {
 
 	if (!opened) {
 		application.messageBox("Fehler", "Kann Input nicht lesen", "error-icon");
-		input.close();
+		log.close();
 		return;
 	}
 	var record;
@@ -27,26 +28,24 @@ var recordcount = 0;
 		//application.messageBox("", "", "");
 		application.activeWindow.simulateIBWKey("FR"); // Enter
 		recordcount++;
-		idn = application.activeWindow.variable("P3GPP");
-        status = application.activeWindow.status;
-        if (status != "OK") {
+        if (application.activeWindow.status != "OK") {
 
             log.write("ERROR, ");
             log.write(recordcount);
 			application.activeWindow.simulateIBWKey("FE"); // Escape
 
         } else {
-
-            log.write(idn);
+            log.write(application.activeWindow.variable("P3GPP")); //idn
         }
 
         if (application.activeWindow.messages.count > 0) {
-
-            log.write(",\x22");
-            log.write(application.activeWindow.messages.item(0));
-            log.write("\x22");
+			for (i = 0; i < application.activeWindow.messages.count; i++) {
+				log.write(",\x22");
+				log.write(application.activeWindow.messages.item(i).text);
+				log.write("\x22");
 
         }
+	}
 
         log.write("\n");
 	}
