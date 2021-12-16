@@ -1,4 +1,5 @@
 function Datenimport() {
+	//funktion öffnet eine gültige PICA3-dat-Datei (Markierung Anfang Datensatz durch \t\n), liest diese datensazweise aus und legt die datensätze einzeln neu an, indem die daten in ein Fenster zur Neueingabe geschrieben werden und dann mit Enter bestätigt wird. Dabei wird eine Logdatei geschrieben, in der die Datensätze nummeriert werden. Im Erfolgsfall wird die IDN protokolliert, bei Fehlern werden alle Fehlerausgaben der WinIBW protokolliert. Die Logdatei ist eine gültige CSV.
 	var input = utility.newFileInput();
 	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
 
@@ -12,7 +13,7 @@ function Datenimport() {
 
 	if (!opened) {
 		application.messageBox("Fehler", "Kann Logdatei nicht anlegen", "error-icon");
-		log.close();
+		input.close();
 		return;
 	}
 	var record;
@@ -21,20 +22,20 @@ function Datenimport() {
 	while ((record = _readRecord(input)) != null) {
 		recordcount++;
 		application.activeWindow.command("\\inv 1"); //neues eingabefenster titeldaten
-                //application.activeWindow.command("\\inv 2"); //neues eingabefenster normdaten
+		//application.activeWindow.command("\\inv 2"); //neues eingabefenster normdaten
 		application.activeWindow.title.insertText(record);
 		application.activeWindow.simulateIBWKey("FR"); // Enter
-		
-        	if (application.activeWindow.status != "OK") {
-		    log.write("ERROR, ");
-		    log.write(recordcount);
-		    for (var i = 0; i < application.activeWindow.messages.count; i++) {
-			    log.write(",\x22");
-			    log.write(application.activeWindow.messages.item(i).text);
-			    log.write("\x22");
-		    }
-            	application.activeWindow.simulateIBWKey("FE"); // Escape
-        	} else {
+		log.write(recordcount + ", ");
+
+		if (application.activeWindow.status != "OK") {
+			log.write("ERROR, ");
+			for (var i = 0; i < application.activeWindow.messages.count; i++) {
+				log.write(",\x22");
+				log.write(application.activeWindow.messages.item(i).text);
+				log.write("\x22");
+			}
+			application.activeWindow.simulateIBWKey("FE"); // Escape
+		} else {
 			log.write(application.activeWindow.variable("P3GPP")); //idn
 		}
 		log.write("\n");
@@ -44,96 +45,62 @@ function Datenimport() {
 	log.close();
 }
 
-function teststring() {	
-	var input = utility.newFileInput();
-	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
-	if (!opened){
-		application.messageBox("Fehler", "Kann Input nicht lesen", "error-icon");
-		return;
-	}
-	var log = utility.newFileOutput();
-	opened = log.create("D:\\batchlog.txt");
-
-	if (!opened) {
-		input.close();
-		application.messageBox("Fehler", "Logdatei nicht angelegt", "error-icon");
-		return;
-	}
-    var record;
-	while ((record = _readRecord(input)) != null) {
-                        
-	var recordlines = record.split("\n");
-	application.messageBox("Info", "ganz record " + record + "." + "lines" + recordlines.length , "error-icon");
-	for (var i = 1; i < recordlines.length; i++) {
-			if (i == 1) {
-				application.messageBox("Info", "nur idn " + recordlines[i], "error-icon");
-				application.activeWindow.command("f idn " + recordlines[i], false);
-			} else if (i > 1) {
-				var feld = recordlines[i].split("\t");
-				application.messageBox("Info", "datensatzzeilen " + recordlines[i], "error-icon");
-				//application.activeWindow.command("k", false); //Bearbeiten ein
-				//__addTag(feld[0], feld[1], true);
-			}
-		}
-
-    }
-}
-
 function BatchChange() {
+	// die Funktion korrigiert oder ergänzt felder auf IDN Basis. Eingelesen wird eine .dat-Datei, die durch \t\n geteilte Datensatzblöcke enthält. Die allererste Zeile der Datei ist die erste IDN. In der ersten Zeile eines jeden Blocks steht die IDN des zu ändernden Datensatzes. In den darauffolgenden x Zeilen steht die Feld- oder Kategoriennummer, ein \t und dann der gewünschte Inhalt des Feldes. Wenn das Feld schon vorhanden ist, wird es überschrieben. Ist es noch nicht vorhanden, wird es neu angelegt.
+	// NB: Wiederholbare Felder können derzeit nicht bearbeitet werden
+	// NB: Es können nur Felder in den Titeldaten, nicht in den Exemplardaten bearbeitet werden.
 	var input = utility.newFileInput();
 	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
 	if (!opened)
 		return;
 	var log = utility.newFileOutput();
-	opened = log.create("D:\\logTp.txt");
+	opened = log.create("D:\\iba-batch-test-log.txt");
 	if (!opened) {
 		input.close();
 		return;
 	}
 
 	var record;
+	var recordcount = 0;
+
 	while ((record = _readRecord(input)) != null) {
-                        application.messageBox("Info", "ganz record " + record, "error-icon");
 		var recordlines = record.split("\n");
-		for (var i = 1; i <= (recordlines.length - 1); i++) {
-			if (i == 1) {
-                //application.messageBox("Info", recordlines[i], "error-icon");
+		// application.messageBox("Info", "Ganzer Recordblock \n" + record + "\n, recordlines.length=" + recordlines.length, "error-icon");
+		for (var i = 0; i < (recordlines.length); i++) {
+			if (i == 0) {
+				//application.messageBox("Info", recordlines[i], "error-icon");
 				application.activeWindow.command("f idn " + recordlines[i], false);
 				var idn = recordlines[i];
-			} else if (i > 1) {
-				application.messageBox("Info", "länge " + recordlines[i].length, "error-icon");
+			} else if (i > 0) {
 				var feld = recordlines[i].split("\t");
-				application.messageBox("Info","feld 1 " + feld[0] + "feld 2 " + feld[1], "error-icon");
+				// application.messageBox("Info","tag = " + feld[0] + " conten = " + feld[1], "error-icon");
 				application.activeWindow.command("k", false); //Bearbeiten ein
-				__addTag(feld[0],feld[1],true);
+				__addTag(feld[0], feld[1], true);
 			}
 		}
 
 		application.activeWindow.simulateIBWKey("FR"); // Enter
 		//status = application.activeWindow.status;
 		//idn = application.activeWindow.variable("P3GPP");
-        
-        if (application.activeWindow.status != "OK") {
-            log.write("ERROR, \x22");
-            log.write(record);
-            log.write("\x22");
+		recordcount++;
+		log.write(recordcount + ", ");
+
+		if (application.activeWindow.status != "OK") {
+			log.write("ERROR");
+			for (var i = 0; i < application.activeWindow.messages.count; i++) {
+				log.write(",\x22");
+				log.write(application.activeWindow.messages.item(i).text);
+				log.write("\x22");
+			}
 			application.activeWindow.simulateIBWKey("FE"); // Escape
-		
-        } else {
-            log.write(idn);
-        }
-		
-        if (application.activeWindow.messages.count > 0) {
-            log.write(",\x22");
-            log.write(application.activeWindow.messages.item(0));
-            log.write("\x22");
-        }
-        
-        log.write("\n");
+		} else {
+			log.write(idn);
+		}
+
+		log.write("\n");
 	}
 	input.close();
 	log.close();
-
 }
 
 
@@ -146,8 +113,8 @@ function _readRecord(input) {
 		if (input.isEOF())
 			break;
 	}
-	
-    if (input.isEOF())
+
+	if (input.isEOF())
 		return null;
 
 	var record = "";
@@ -155,10 +122,9 @@ function _readRecord(input) {
 		if (record.length > 1)
 			record += "\n";
 
-        record += line;
+		record += line;
 		line = input.readLine();
-}
-
+	}
 
 	return record;
 }
