@@ -1,7 +1,7 @@
 function Datenimport() {
 	//funktion öffnet eine gültige PICA3-dat-Datei (Markierung Anfang Datensatz durch \t\n), liest diese datensazweise aus und legt die datensätze einzeln neu an, indem die daten in ein Fenster zur Neueingabe geschrieben werden und dann mit Enter bestätigt wird. Dabei wird eine Logdatei geschrieben, in der die Datensätze nummeriert werden. Im Erfolgsfall wird die IDN protokolliert, bei Fehlern werden alle Fehlerausgaben der WinIBW protokolliert. Die Logdatei ist eine gültige CSV.
 	var input = utility.newFileInput();
-	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
+	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.dat", "*.dat", "Textdateien");
 
 	if (!opened) {
 		application.messageBox("Fehler", "Kann Input nicht lesen", "error-icon");
@@ -51,11 +51,18 @@ function BatchChange() {
 	// NB: Es können nur Felder in den Titeldaten, nicht in den Exemplardaten bearbeitet werden.
 	var input = utility.newFileInput();
 	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
-	if (!opened)
-		return;
-	var log = utility.newFileOutput();
-	opened = log.create("D:\\iba-batch-test-log.txt");
 	if (!opened) {
+		application.messageBox("Fehler", "Kann Input nicht lesen", "error-icon");
+		input.close();
+		return;
+	}
+
+	var log = utility.newFileOutput();
+	var jobname = __Prompter("Jobname", "Geben Sie den Name für den Jobname an. Er wird für das Logfile verwendet.", "Name");
+	opened = log.create("D:\\" + jobname + ".log");
+
+	if (!opened) {
+		application.messageBox("Fehler", "Kann Logdatei nicht anlegen", "error-icon");
 		input.close();
 		return;
 	}
@@ -103,28 +110,39 @@ function BatchChange() {
 	log.close();
 }
 
+function test_record() {
+	var input = utility.newFileInput();
+	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
+	if (!opened)
+		return;
+
+	var record;
+	var recordcount = 0;
+
+	while ((record = _readRecord(input)) != null) {
+		recordcount++;
+		application.messageBox("Datensatz", record, "info-icon");
+
+	}
+}
 
 function _readRecord(input) {
 
-	// Leerzeilen überlesen:
-
 	var line;
-	while ((line = input.readLine()) == "\t") {
-		if (input.isEOF())
-			break;
-	}
 
 	if (input.isEOF())
 		return null;
 
 	var record = "";
 	while (line != "\t" && !input.isEOF()) {
+		line = input.readLine();
 		if (record.length > 1)
 			record += "\n";
+		if (line.length > 0)
+			record += line;
 
-		record += line;
-		line = input.readLine();
 	}
+
 
 	return record;
 }
