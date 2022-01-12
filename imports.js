@@ -8,8 +8,8 @@ function Datenimport() {
 		input.close();
 		return;
 	}
-	var log = utility.newFileOutput();
-	opened = log.create("D:\\za-batch.log");
+	var jobname = __Prompter("Jobname", "Geben Sie den Name für den Importjob an. Er wird für das Logfile verwendet.", "Name");
+	opened = log.create("D:\\" + jobname + ".log");
 
 	if (!opened) {
 		application.messageBox("Fehler", "Kann Logdatei nicht anlegen", "error-icon");
