@@ -8,6 +8,7 @@ function Datenimport() {
 		input.close();
 		return;
 	}
+	var log = utility.newFileOutput();
 	var jobname = __Prompter("Jobname", "Geben Sie den Name für den Importjob an. Er wird für das Logfile verwendet.", "Name");
 	opened = log.create("D:\\" + jobname + ".log");
 
