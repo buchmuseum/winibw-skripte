@@ -48,8 +48,8 @@ function Datenimport() {
 
 function BatchChange() {
 	// die Funktion korrigiert oder ergänzt felder auf IDN Basis. Eingelesen wird eine .dat-Datei, die durch \t\n geteilte Datensatzblöcke enthält. Die allererste Zeile der Datei ist die erste IDN. In der ersten Zeile eines jeden Blocks steht die IDN des zu ändernden Datensatzes. In den darauffolgenden x Zeilen steht die Feld- oder Kategoriennummer, ein \t und dann der gewünschte Inhalt des Feldes. Wenn das Feld schon vorhanden ist, wird es überschrieben. Ist es noch nicht vorhanden, wird es neu angelegt.
-	// NB: Wiederholbare Felder können derzeit nicht bearbeitet werden
-	// NB: Es können nur Felder in den Titeldaten, nicht in den Exemplardaten bearbeitet werden.
+	// NB: Wiederholbare Felder dürfen derzeit nicht bearbeitet werden, weil das Skript nicht prüft, ob das zu ändernde Feld wiederholbar ist, bereits exisitert etc.
+	// NB: Es dürfen nur Felder in den Titeldaten, nicht in den Exemplardaten bearbeitet werden, weil das Skript keine Möglichkeit hat, den "richtigen" Exemplarsatz zu finden.
 	var input = utility.newFileInput();
 	var opened = input.openViaGUI("Eingabedatei wählen", "D:\\", "testTp.txt", "*.dat", "Textdateien");
 	if (!opened) {
